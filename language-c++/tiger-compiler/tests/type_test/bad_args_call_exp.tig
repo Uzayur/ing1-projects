@@ -1,0 +1,6 @@
+let
+    function a(b : int, c : int) : int =
+        b
+in
+    a(90)
+end

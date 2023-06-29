@@ -1,0 +1,2 @@
+/* fortytwo-fn.tih. */
+function fortytwo() : int = 42

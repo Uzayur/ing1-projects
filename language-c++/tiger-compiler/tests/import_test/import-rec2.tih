@@ -1,0 +1,2 @@
+import "import-rec1.tih"
+var b := 43

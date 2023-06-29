@@ -1,0 +1,5 @@
+#!/bin/sh
+
+cd all_test/
+python3 run_test.py
+cd ..

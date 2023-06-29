@@ -1,0 +1,6 @@
+let
+    function foo() : int = bar()
+    function bar() : int =
+in
+    0
+end

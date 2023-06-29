@@ -1,0 +1,6 @@
+let
+    var a := 42
+    /* Definition of/* I am a nested comment */ a var*/
+in
+    print(a)
+end

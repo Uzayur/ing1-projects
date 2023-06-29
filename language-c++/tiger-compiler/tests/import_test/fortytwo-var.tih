@@ -1,0 +1,3 @@
+/* fortytwo-var.tih. */
+import "fortytwo-fn.tih"
+var fortytwo := fortytwo()

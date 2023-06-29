@@ -1,0 +1,6 @@
+let
+    var a : string := "ok"
+    var b : string := a
+in
+    b := "redefinition"
+end

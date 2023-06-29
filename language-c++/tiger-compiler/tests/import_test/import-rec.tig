@@ -1,0 +1,4 @@
+import "import-rec1.tih"
+import "import-rec2.tih"
+
+var c := 0

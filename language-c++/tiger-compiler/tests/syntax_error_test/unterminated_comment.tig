@@ -1,0 +1,6 @@
+let
+    var a := 42
+    /* I am an unterminated comment
+in
+    print(a)
+end

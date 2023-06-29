@@ -1,0 +1,9 @@
+#!/bin/sh
+
+meson builddir
+meson compile -C builddir
+
+# Test of the function echo
+python3 tests/test_echo.py
+
+rm -rf builddir

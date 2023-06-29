@@ -1,0 +1,6 @@
+let
+    var a := 42
+    /* Comment with a \\\\n*/
+in 
+    print(a)
+end

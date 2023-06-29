@@ -1,0 +1,97 @@
+F2L
+===
+
+All three F2L pattern files (layer1_white_edges.csv, layer1_white_corners.csv,
+layer2_edges.csv) follow the same syntax, and assume the cube is oriented such
+as the white face is on top.
+
+Each line is composed of the piece coordinates, its colors orientation and a
+sequence of moves.
+
+- The first line is considered to be the **goal** pattern, describing where we
+  want to move the piece and serving as a reference for the expected color
+  orientation.
+- Each following line describes a piece pattern to match and the associated
+  moves to place the piece to its solved location.
+
+For example, in layer1_white_edges.csv, the goal is:
+
+    +1,0,+1,b,_,a,
+
+Meaning we are trying each time to move a piece to the top-front edge, with a
+color noted as 'b' on the x axis and another color noted down as 'a' on the z
+axis. The '_' syntax means we ignore the color on the y axis (which is NONE for
+the top-front edge).
+
+In our case, we are solving the first layer and the white face is on top, hence
+'a' is always the WHITE color, but 'b' can be one of the other colors (except
+YELLOW because white and yellow faces are opposed, so a white/yellow edge does
+not exist).
+
+Taking a look at the two following lines:
+
+    -1,-1,0,a,b,_,U L U'
+    -1,-1,0,b,a,_,U2 B' U2
+
+These patterns are both trying to solve the piece in (-1, -1, 0) position.
+However the moves to apply depend on the edge color orientation, described with
+the 'a', 'b', '_' syntax and referring to the ones from the goal pattern. As a
+concrete example, trying to place a piece (-1, -1, 0) (BLUE, WHITE, NONE)
+matches the second pattern thus to correctly place the piece we should execute
+"U2 B' U2".
+
+To use the pattern files, you first need to find which color corresponds to which
+letter (hint: use the goal line). Then you need to identify the piece to be moved
+on the cube and apply it the right moves based on its coordinates and color
+orientation. Once this is done for the first side, simply rotate the cube and
+repeat the process for the next three faces.
+
+Bonus
+=====
+
+OLL
+---
+
+The layer3_oll.csv file is the complete list of OLL patterns, and assume the
+cube is oriented such as: green front, orange right and yellow top.
+
+Each line describes a specific OLL, starting with its name, then 9 columns
+representing the orientations of the yellow face of each pieces, and finally the
+moves. The piece order for the orientation is (looking down on the top face):
+
+    1 2 3
+    4 5 6
+    7 8 9
+
+Possible orientations for the yellow face of each pieces are represented by
+a letter (U means the yellow face is well oriented):
+  - U: Up
+  - B: Back
+  - F: Front
+  - R: Right
+  - L: Left
+
+You can find a visual representation of all OLL here:
+https://www.speedsolving.com/wiki/index.php/OLL
+
+For this bonus step, you must now support advanced Singmaster notation with
+lowercase face moves, as well as slice moves. More information can be found
+here: https://ruwix.com/the-rubiks-cube/notation/advanced/
+
+Since the given CSV file is a general description of OLL patterns, and does not
+solve one piece at a time as the F2L step, you should make sure to try all four
+orientations of the patterns to match it.
+
+PLL
+---
+
+The layer3_pll.csv file is very similar to the OLL file. The assumed orientation
+is the same: green front, orange right and yellow top.
+
+Each line describes a specific PLL, starting with its name, then 9 columns
+representing the permutation of the yellow face, and finally the moves. The
+piece order for the permutation is the same as the OLL.
+
+A visual representation of PLL patterns can be found here:
+http://algdb.net/puzzle/333/pll
+https://www.speedsolving.com/wiki/index.php/PLL

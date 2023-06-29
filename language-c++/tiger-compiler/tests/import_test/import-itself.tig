@@ -1,0 +1,3 @@
+import "import-itself.tih"
+
+var n := 1

@@ -1,0 +1,6 @@
+let
+    function a(b : int) =
+        b
+in
+    a(8)
+end

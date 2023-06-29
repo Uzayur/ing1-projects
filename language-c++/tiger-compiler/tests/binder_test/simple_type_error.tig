@@ -1,0 +1,6 @@
+let
+  type rec = { a : unknown }
+in
+  rec { a = 42 }
+end
+

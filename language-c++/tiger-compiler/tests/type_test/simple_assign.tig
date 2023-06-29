@@ -1,0 +1,5 @@
+let
+    var a : int := 8
+in
+    a := 0
+end

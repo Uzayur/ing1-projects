@@ -1,0 +1,9 @@
+let
+    class C
+    {
+        var a := 0
+    }
+    var c := new C
+in
+    c.a := 2
+end

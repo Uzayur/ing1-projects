@@ -1,0 +1,17 @@
+type int_array = array of int
+
+function sort(arr: int_array, size: int) =
+    if size > 0 then
+        for occ := 0 to size - 1 do
+        (
+            for i := 0 to size - 2 do
+            (
+                if arr[i + 1] < arr[i] then
+                    let
+                        var tmp := arr[i]
+                    in
+                        arr[i] := arr[i+1];
+                        arr[i+1] := tmp
+                    end
+            )
+        )

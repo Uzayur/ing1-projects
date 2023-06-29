@@ -1,0 +1,291 @@
+#include "parser.h"
+
+static struct ast_node *init_node_type(enum node_type type)
+{
+    struct ast_node *node = malloc(sizeof(struct ast_node));
+
+    node->data = NULL;
+    node->type = type;
+    return node;
+}
+
+static struct ast_while *init_ast_while(void)
+{
+    struct ast_while *ast = malloc(sizeof(struct ast_while));
+
+    ast->clist_cond = NULL;
+    ast->clist_do = NULL;
+
+    return ast;
+}
+
+static struct ast_until *init_ast_until(void)
+{
+    struct ast_until *ast = malloc(sizeof(struct ast_until));
+
+    ast->clist_cond = NULL;
+    ast->clist_do = NULL;
+
+    return ast;
+}
+
+static struct ast_if *init_ast_if(void)
+{
+    struct ast_if *ast = malloc(sizeof(struct ast_if));
+
+    ast->cond = NULL;
+    ast->then = NULL;
+    ast->elif = NULL;
+
+    return ast;
+}
+
+static size_t count_cmd(struct token_list *tokens, size_t index)
+{
+    size_t count = 0;
+
+    while (index < tokens->size && tokens->list[index]->type == TOKEN_WORDS)
+    {
+        count++;
+        index++;
+    }
+
+    return count;
+}
+
+static int stop(struct token_list *tokens, size_t index)
+{
+    if (index >= tokens->size || tokens->list[index]->type == TOKEN_THEN
+        || tokens->list[index]->type == TOKEN_ELIF
+        || tokens->list[index]->type == TOKEN_ELSE
+        || tokens->list[index]->type == TOKEN_FI
+        || tokens->list[index]->type == TOKEN_DO
+        || tokens->list[index]->type == TOKEN_DONE)
+        return 1;
+    return 0;
+}
+
+static size_t create_until_node(struct ast_node *until_node,
+                                struct token_list *tokens, size_t index);
+
+static size_t create_while_node(struct ast_node *while_node,
+                                struct token_list *tokens, size_t index);
+
+static size_t create_elif_node(struct ast_node *if_node,
+                               struct token_list *tokens, size_t index);
+
+static size_t create_if_node(struct ast_node *if_node,
+                             struct token_list *tokens, size_t index);
+
+static size_t create_node(struct ast_node *node, struct token_list *tokens,
+                          size_t index)
+{
+    if (node->type == TYPE_COMPOUND_COMMAND)
+    {
+        node->data = malloc(sizeof(struct ast_node));
+        node->data->ast_clist = malloc(sizeof(struct ast_clist));
+        node->data->ast_clist->ast_command = init_node_type(0);
+        index = create_node(node->data->ast_clist->ast_command, tokens, index);
+        struct ast_node *tmp = node;
+        while (!stop(tokens, index))
+        {
+            tmp->data->ast_clist->next = init_node_type(TYPE_COMPOUND_COMMAND);
+            tmp = tmp->data->ast_clist->next;
+            tmp->data = malloc(sizeof(struct ast_node));
+            tmp->data->ast_clist = malloc(sizeof(struct ast_clist));
+            tmp->data->ast_clist->ast_command = init_node_type(0);
+            index =
+                create_node(tmp->data->ast_clist->ast_command, tokens, index);
+        }
+        tmp->data->ast_clist->next = NULL;
+    }
+
+    else if (tokens->list[index]->type == TOKEN_WORDS)
+    {
+        node->type = TYPE_COMMAND;
+
+        struct ast_command *cmd = malloc(sizeof(struct ast_command));
+        cmd->argv = malloc(sizeof(char *) * count_cmd(tokens, index));
+        cmd->size = count_cmd(tokens, index);
+
+        size_t cmd_ind = 0;
+        while (index < tokens->size && tokens->list[index]->type == TOKEN_WORDS)
+            cmd->argv[cmd_ind++] = tokens->list[index++]->data;
+
+        node->data = malloc(sizeof(struct ast_command));
+        node->data->ast_command = cmd;
+        if (index < tokens->size && tokens->list[index]->type == TOKEN_COLON)
+            index++;
+    }
+
+    else if (tokens->list[index]->type == TOKEN_IF)
+    {
+        node->type = TYPE_IF;
+        index = create_if_node(node, tokens, index + 1);
+    }
+
+    else if (tokens->list[index]->type == TOKEN_WHILE)
+    {
+        node->type = TYPE_WHILE;
+        index = create_while_node(node, tokens, index + 1);
+    }
+    else if (tokens->list[index]->type == TOKEN_UNTIL)
+    {
+        node->type = TYPE_UNTIL;
+        index = create_until_node(node, tokens, index + 1);
+    }
+    else if (tokens->list[index]->type == TOKEN_ELIF)
+    {
+        node->type = TYPE_IF;
+        index = create_elif_node(node, tokens, index + 1);
+    }
+
+    else if (tokens->list[index]->type == TOKEN_THEN)
+        index = create_node(node, tokens, index + 1);
+
+    else if (tokens->list[index]->type == TOKEN_ELSE)
+        index = create_node(node, tokens, index + 1);
+
+    else if (tokens->list[index]->type == TOKEN_DO)
+        index = create_node(node, tokens, index + 1);
+    else if (tokens->list[index]->type == TOKEN_AND)
+    {
+        node->type = TYPE_COMMAND;
+        struct ast_command *cmd = malloc(sizeof(struct ast_command));
+        cmd->argv = malloc(sizeof(char *));
+        cmd->size = 1;
+        cmd->argv[0] = "&&";
+        node->data = malloc(sizeof(struct ast_command));
+        node->data->ast_command = cmd;
+        index++;
+    }
+    else if (tokens->list[index]->type == TOKEN_OR)
+    {
+        node->type = TYPE_COMMAND;
+        struct ast_command *cmd = malloc(sizeof(struct ast_command));
+        cmd->argv = malloc(sizeof(char *));
+        cmd->size = 1;
+        cmd->argv[0] = "||";
+        node->data = malloc(sizeof(struct ast_command));
+        node->data->ast_command = cmd;
+        index++;
+    }
+    else if (tokens->list[index]->type == TOKEN_PIPE)
+    {
+        node->type = TYPE_COMMAND;
+        struct ast_command *cmd = malloc(sizeof(struct ast_command));
+        cmd->argv = malloc(sizeof(char *));
+        cmd->size = 1;
+        cmd->argv[0] = "|";
+        node->data = malloc(sizeof(struct ast_command));
+        node->data->ast_command = cmd;
+        index++;
+    }
+
+    return index;
+}
+
+static size_t create_until_node(struct ast_node *until_node,
+                                struct token_list *tokens, size_t index)
+{
+    struct ast_until *new_until_node = init_ast_until();
+
+    new_until_node->clist_cond = init_node_type(TYPE_COMPOUND_COMMAND);
+
+    index = create_node(new_until_node->clist_cond, tokens, index);
+
+    new_until_node->clist_do = init_node_type(TYPE_COMPOUND_COMMAND);
+
+    index = create_node(new_until_node->clist_do, tokens, index);
+
+    until_node->data = malloc(sizeof(struct ast_until *));
+    until_node->data->ast_until = new_until_node;
+
+    return index + 2;
+}
+
+static size_t create_while_node(struct ast_node *while_node,
+                                struct token_list *tokens, size_t index)
+{
+    struct ast_while *new_while_node = init_ast_while();
+
+    new_while_node->clist_cond = init_node_type(TYPE_COMPOUND_COMMAND);
+
+    index = create_node(new_while_node->clist_cond, tokens, index);
+
+    new_while_node->clist_do = init_node_type(TYPE_COMPOUND_COMMAND);
+
+    index = create_node(new_while_node->clist_do, tokens, index);
+
+    while_node->data = malloc(sizeof(struct ast_while *));
+    while_node->data->ast_while = new_while_node;
+
+    return index + 2;
+}
+
+static size_t create_elif_node(struct ast_node *if_node,
+                               struct token_list *tokens, size_t index)
+{
+    struct ast_if *new_if_node = init_ast_if();
+
+    new_if_node->cond = init_node_type(TYPE_COMPOUND_COMMAND);
+
+    index = create_node(new_if_node->cond, tokens, index);
+
+    new_if_node->then = init_node_type(TYPE_COMPOUND_COMMAND);
+
+    index = create_node(new_if_node->then, tokens, index);
+
+    if_node->data = malloc(sizeof(struct ast_if *));
+    if_node->data->ast_if = new_if_node;
+
+    if (tokens->list[index]->type != TOKEN_FI)
+    {
+        new_if_node->elif = init_node_type(TYPE_COMPOUND_COMMAND);
+        index = create_node(new_if_node->elif, tokens, index);
+        if (tokens->list[index]->type == TOKEN_FI)
+            return index;
+        return index + 1;
+    }
+    return index;
+}
+
+static size_t create_if_node(struct ast_node *if_node,
+                             struct token_list *tokens, size_t index)
+{
+    struct ast_if *new_if_node = init_ast_if();
+
+    new_if_node->cond = init_node_type(TYPE_COMPOUND_COMMAND);
+
+    index = create_node(new_if_node->cond, tokens, index);
+
+    new_if_node->then = init_node_type(TYPE_COMPOUND_COMMAND);
+
+    index = create_node(new_if_node->then, tokens, index);
+
+    if_node->data = malloc(sizeof(struct ast_if *));
+    if_node->data->ast_if = new_if_node;
+
+    if (tokens->list[index]->type != TOKEN_FI)
+    {
+        new_if_node->elif = init_node_type(TYPE_COMPOUND_COMMAND);
+        index = create_node(new_if_node->elif, tokens, index);
+        if (tokens->list[index]->type == TOKEN_FI)
+            return index + 2;
+        return index + 1;
+    }
+    return index + 2;
+}
+
+struct ast_node *parser(struct token_list *tokens)
+{
+    struct ast_node *tree = NULL;
+
+    for (size_t index_token = 0; index_token < tokens->size; index_token++)
+    {
+        struct ast_node *new_node = init_node_type(TYPE_COMPOUND_COMMAND);
+        index_token = create_node(new_node, tokens, index_token);
+        tree = new_node;
+    }
+    return tree;
+}

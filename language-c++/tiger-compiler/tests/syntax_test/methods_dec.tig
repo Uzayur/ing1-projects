@@ -1,0 +1,19 @@
+let
+    var a := 42
+    function m() = print("m()\n")
+        class C
+        {
+            var a := 51
+            method m() = print("C.m()\n")
+            method print_a()      = (print_int(a); print("\n"))
+            method print_self_a() = (print_int(self.a); print("\n"))
+            method call_m()      = m()
+            method call_self_m() = self.m()
+        }
+    var c := new C
+in
+    c.print_a();
+    c.print_self_a();
+    c.call_m();
+    c.call_self_m()
+end

@@ -1,0 +1,5 @@
+let
+    var a := "unterminated string
+in
+    print(a)
+end

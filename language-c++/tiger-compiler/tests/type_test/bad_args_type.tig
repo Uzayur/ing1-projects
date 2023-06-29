@@ -1,0 +1,6 @@
+let
+    function a(b : int, c : int) : int =
+        b
+in
+    a("ok", 90)
+end

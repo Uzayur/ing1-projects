@@ -1,0 +1,11 @@
+let
+    function a(b : int) =
+    (
+        for i := b to 90 do
+        (
+            b := b + 1
+        )
+    )
+in
+    a(89)
+end
